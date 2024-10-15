@@ -6,12 +6,12 @@ function App() {
   const [stopTime, setStopTime] = useState('');
   const [message, setMessage] = useState('');
 
-  const handleSetTimers = async () => {
-    const vin = 'i4'; // Replace with actual VIN
-    const apiUrl = 'http://localhost:3000/setTimers';
+  const vin = 'i4';
+  const apiUrlBase = 'http://localhost:3000';
 
+  const handleSetTimers = async () => {
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch(`${apiUrlBase}/setTimers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,6 +32,71 @@ function App() {
       }
     } catch (error) {
       setMessage('Error: Unable to set timers');
+    }
+  };
+
+  const handleClearTimers = async () => {
+    try {
+      const response = await fetch(`${apiUrlBase}/clearTimers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Success: Timers cleared!');
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to clear timers');
+    }
+  };
+
+  const handleStartCharging = async () => {
+    try {
+      const response = await fetch(`${apiUrlBase}/startCharging`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ vin }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Success: Charging started!');
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to start charging');
+    }
+  };
+
+  const handleStopCharging = async () => {
+    try {
+      const response = await fetch(`${apiUrlBase}/stopCharging`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ vin }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Success: Charging stopped!');
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to stop charging');
     }
   };
 
@@ -57,6 +122,9 @@ function App() {
         />
       </div>
       <button onClick={handleSetTimers}>Set Timers</button>
+      <button onClick={handleClearTimers}>Clear Timers</button>
+      <button onClick={handleStartCharging}>Start Charging</button>
+      <button onClick={handleStopCharging}>Stop Charging</button>
       {message && <p>{message}</p>}
     </div>
   );

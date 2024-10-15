@@ -87,6 +87,56 @@ app.post('/setTimers', (req, res) => {
     res.json({ message: 'Timers set successfully', startDelay, stopDelay });
 });
 
+app.post('/clearTimers', (req, res) => {
+    if (startTimer) {
+        clearTimeout(startTimer);
+        startTimer = null;
+        console.log('Start timer cleared.');
+    }
+
+    if (stopTimer) {
+        clearTimeout(stopTimer);
+        stopTimer = null;
+        console.log('Stop timer cleared.');
+    }
+
+    res.json({ message: 'Timers cleared successfully' });
+});
+
+app.post('/startCharging', async (req, res) => {
+    const { vin } = req.body;
+
+    if (!vin) {
+        return res.status(400).json({ error: 'VIN is required to start charging' });
+    }
+
+    try {
+        await bmwClient.startCharging(vin);
+        console.log(`Charging started for vehicle with VIN: ${vin}`);
+        res.json({ message: 'Charging started successfully' });
+    } catch (error) {
+        console.error('Error starting charging:', error);
+        res.status(500).json({ error: 'Failed to start charging' });
+    }
+});
+
+app.post('/stopCharging', async (req, res) => {
+    const { vin } = req.body;
+
+    if (!vin) {
+        return res.status(400).json({ error: 'VIN is required to stop charging' });
+    }
+
+    try {
+        await bmwClient.stopCharging(vin);
+        console.log(`Charging stopped for vehicle with VIN: ${vin}`);
+        res.json({ message: 'Charging stopped successfully' });
+    } catch (error) {
+        console.error('Error stopping charging:', error);
+        res.status(500).json({ error: 'Failed to stop charging' });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Timer API running on http://localhost:${port}`);
 });
