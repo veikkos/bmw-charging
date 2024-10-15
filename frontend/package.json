@@ -8,9 +8,9 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
-    "start": "PORT=8090 react-scripts start",
+    "start": "PORT=8091 react-scripts start",
     "build": "react-scripts build",
-    "serve": "serve -s build -l 8090"
+    "serve": "serve -s build -l 8091"
   },
   "eslintConfig": {
     "extends": [

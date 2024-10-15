@@ -8,7 +8,7 @@ const bmwClient = new BMWClient();
 const cors = require('cors');
 
 const corsOptions = {
-  origin: 'http://localhost:8090',
+  origin: 'http://localhost:8091',
   methods: ['GET', 'POST'],
   optionsSuccessStatus: 200
 };
