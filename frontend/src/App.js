@@ -7,7 +7,7 @@ function App() {
   const [message, setMessage] = useState('');
 
   const vin = 'i4';
-  const apiUrlBase = 'http://localhost:3000';
+  const apiUrlBase = process.env.REACT_APP_API_URL;
 
   const handleSetTimers = async () => {
     try {
