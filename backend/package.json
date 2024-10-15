@@ -9,6 +9,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "bmw": "github:veikkos/bmw"
+    "bmw": "github:veikkos/bmw",
+    "cors": "^2.8.5"
   }
 }

@@ -5,6 +5,16 @@ const port = 3000;
 const BMWClient = require('bmw/src/bmw');
 const bmwClient = new BMWClient();
 
+const cors = require('cors');
+
+const corsOptions = {
+  origin: 'http://localhost:8090',
+  methods: ['GET', 'POST'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 let startTimer = null;
