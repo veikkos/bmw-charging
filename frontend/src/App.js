@@ -6,7 +6,7 @@ function App() {
   const [stopTime, setStopTime] = useState('');
   const [message, setMessage] = useState('');
 
-  const vin = 'i4';
+  const vin = process.env.REACT_APP_VIN;
   const apiUrlBase = process.env.REACT_APP_API_URL;
 
   const handleSetTimers = async () => {
