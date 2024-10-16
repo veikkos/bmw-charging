@@ -42,6 +42,9 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          vin: vin,
+        }),
       });
 
       const data = await response.json();
@@ -100,6 +103,52 @@ function App() {
     }
   };
 
+  const handleCheckCarStatus = async () => {
+    try {
+      const response = await fetch(`${apiUrlBase}/carStatus?vin=${vin}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(`Car Status: ${data.message}`);
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to get car status');
+    }
+  };
+
+  const handleCheckTimers = async () => {
+    try {
+      const response = await fetch(`${apiUrlBase}/getTimers?vin=${vin}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.startTime && data.stopTime) {
+          setMessage(`Timers: Start in ${data.startTime}, Stop in ${data.stopTime}`);
+        } else {
+          setMessage('No timers set');
+        }
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to get timers');
+    }
+  };
+
   return (
     <div className="App">
       <h1>BMW Charging</h1>
@@ -125,6 +174,8 @@ function App() {
       <button onClick={handleClearTimers}>Clear Timers</button>
       <button onClick={handleStartCharging}>Start Charging</button>
       <button onClick={handleStopCharging}>Stop Charging</button>
+      <button onClick={handleCheckCarStatus}>Check Car Status</button>
+      <button onClick={handleCheckTimers}>Check Current Timers</button>
       {message && <p>{message}</p>}
     </div>
   );
