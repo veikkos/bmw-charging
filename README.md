@@ -65,10 +65,61 @@ The backend will now be running on port `3000` by default.
 
 ### 3. Endpoints
 
-- `/setTimers` - Set start and stop timers for charging
-- `/clearTimers` - Clear all active timers
-- `/startCharging` - Start charging the vehicle immediately
-- `/stopCharging` - Stop charging the vehicle immediately
+- **`/setTimers`** (POST)
+  - **Description**: Set start and stop timers for vehicle charging.
+  - **Body**:
+    ```json
+    {
+      "vin": "your-vin-number",
+      "startTime": "hh:mm",
+      "stopTime": "hh:mm"
+    }
+    ```
+
+- **`/clearTimers`** (POST)
+  - **Description**: Clears all active charging timers.
+  - **Body**:
+    ```json
+    {
+      "vin": "your-vin-number"
+    }
+    ```
+
+- **`/startCharging`** (POST)
+  - **Description**: Starts charging the vehicle immediately.
+  - **Body**:
+    ```json
+    {
+      "vin": "your-vin-number"
+    }
+    ```
+
+- **`/stopCharging`** (POST)
+  - **Description**: Stops charging the vehicle immediately.
+  - **Body**:
+    ```json
+    {
+      "vin": "your-vin-number"
+    }
+    ```
+
+- **`/getTimers`** (GET)
+  - **Description**: Fetches the current start and stop timers for the vehicle.
+  - **Query Parameters**:
+    ```json
+    {
+      "vin": "your-vin-number"
+    }
+    ```
+
+- **`/carStatus`** (GET)
+  - **Description**: Fetches the current status of the vehicle (connected, charging, etc.).
+  - **Query Parameters**:
+    ```json
+    {
+      "vin": "your-vin-number"
+    }
+    ```
 
 ---
 
