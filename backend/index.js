@@ -9,9 +9,9 @@ const bmwClient = new BMWClient();
 const cors = require('cors');
 
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:8091',
-  methods: ['GET', 'POST'],
-  optionsSuccessStatus: 200
+    origin: process.env.CORS_ORIGIN || 'http://localhost:8091',
+    methods: ['GET', 'POST'],
+    optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
@@ -27,13 +27,29 @@ function calculateDelay(hhmm) {
     const now = new Date();
     const targetTime = new Date(now);
     targetTime.setHours(hours, minutes, 0, 0); // Set the target time for today
-    
+
     // If target time is in the past, set it for tomorrow
     if (targetTime < now) {
         targetTime.setDate(targetTime.getDate() + 1);
     }
-    
+
     return targetTime - now; // Return delay in milliseconds
+}
+
+function clearStartTimerIfNeeded() {
+    if (startTimer) {
+        clearTimeout(startTimer);
+        startTimer = null;
+        console.log('Start timer cleared.');
+    }
+}
+
+function clearStopTimerIfNeeded() {
+    if (stopTimer) {
+        clearTimeout(stopTimer);
+        stopTimer = null;
+        console.log('Stop timer cleared.');
+    }
 }
 
 // API to set the start and stop timers for charging
@@ -51,24 +67,20 @@ app.post('/setTimers', (req, res) => {
         return res.status(400).json({ error: 'Start time must be before stop time' });
     }
 
-    if (startTimer) {
-        clearTimeout(startTimer);
-    }
-    if (stopTimer) {
-        clearTimeout(stopTimer);
-    }
+    clearStartTimerIfNeeded();
+    clearStopTimerIfNeeded();
 
     startTimer = setTimeout(async () => {
         console.log('Start timer triggered: Starting charging...');
         try {
-            await bmwClient.stopCharging(vin);
             await bmwClient.startCharging(vin);
             console.log(`Charging started for vehicle with VIN: ${vin}`);
         } catch (error) {
             console.error('Error starting charging:', error);
+            clearStopTimerIfNeeded();
         }
 
-        clearTimeout(startTimer);
+        clearStartTimerIfNeeded();
     }, startDelay);
 
     stopTimer = setTimeout(async () => {
@@ -80,7 +92,7 @@ app.post('/setTimers', (req, res) => {
             console.error('Error stopping charging:', error);
         }
 
-        clearTimeout(stopTimer);
+        clearStopTimerIfNeeded();
     }, stopDelay);
 
     console.log(`Timers set: Start in ${startDelay / 1000} s, Stop in ${stopDelay / 1000} s`);
@@ -89,17 +101,8 @@ app.post('/setTimers', (req, res) => {
 });
 
 app.post('/clearTimers', (req, res) => {
-    if (startTimer) {
-        clearTimeout(startTimer);
-        startTimer = null;
-        console.log('Start timer cleared.');
-    }
-
-    if (stopTimer) {
-        clearTimeout(stopTimer);
-        stopTimer = null;
-        console.log('Stop timer cleared.');
-    }
+    clearStartTimerIfNeeded();
+    clearStopTimerIfNeeded();
 
     res.json({ message: 'Timers cleared successfully' });
 });
