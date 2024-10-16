@@ -166,12 +166,12 @@ function App() {
     <div className="App">
       <h1>BMW Charging</h1>
       <div className="form-group">
-        <label>VIN:</label>
+        <label>Car:</label>
         <input
           type="text"
           value={vin}
           onChange={(e) => setVin(e.target.value)}
-          placeholder="Enter VIN"
+          placeholder="VIN or part of the model"
         />
       </div>
       <div className="form-group">
