@@ -1,13 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
+  const [vin, setVin] = useState('');
   const [startTime, setStartTime] = useState('');
   const [stopTime, setStopTime] = useState('');
   const [message, setMessage] = useState('');
 
-  const vin = process.env.REACT_APP_VIN;
   const apiUrlBase = process.env.REACT_APP_API_URL;
+
+  // Fetch the VIN from localStorage when the component mounts
+  useEffect(() => {
+    const storedVin = localStorage.getItem('vin');
+    if (storedVin) {
+      setVin(storedVin);
+    }
+  }, []);
+
+  // Save the VIN to localStorage whenever it changes
+  useEffect(() => {
+    if (vin) {
+      localStorage.setItem('vin', vin);
+    }
+  }, [vin]);
 
   const handleSetTimers = async () => {
     try {
@@ -153,12 +168,22 @@ function App() {
     <div className="App">
       <h1>BMW Charging</h1>
       <div className="form-group">
+        <label>VIN:</label>
+        <input
+          type="text"
+          value={vin}
+          onChange={(e) => setVin(e.target.value)}
+          placeholder="Enter VIN"
+        />
+      </div>
+      <div className="form-group">
         <label>Start Time:</label>
         <input
           type="text"
           value={startTime}
           onChange={(e) => setStartTime(e.target.value)}
           placeholder="(hh:mm)"
+          disabled={!vin}
         />
       </div>
       <div className="form-group">
@@ -168,14 +193,15 @@ function App() {
           value={stopTime}
           onChange={(e) => setStopTime(e.target.value)}
           placeholder="(hh:mm)"
+          disabled={!vin}
         />
       </div>
-      <button onClick={handleSetTimers}>Set Timers</button>
-      <button onClick={handleClearTimers}>Clear Timers</button>
-      <button onClick={handleStartCharging}>Start Charging</button>
-      <button onClick={handleStopCharging}>Stop Charging</button>
-      <button onClick={handleCheckCarStatus}>Check Car Status</button>
-      <button onClick={handleCheckTimers}>Check Current Timers</button>
+      <button onClick={handleSetTimers} disabled={!vin}>Set Timers</button>
+      <button onClick={handleClearTimers} disabled={!vin}>Clear Timers</button>
+      <button onClick={handleStartCharging} disabled={!vin}>Start Charging</button>
+      <button onClick={handleStopCharging} disabled={!vin}>Stop Charging</button>
+      <button onClick={handleCheckCarStatus} disabled={!vin}>Check Car Status</button>
+      <button onClick={handleCheckTimers} disabled={!vin}>Check Current Timers</button>
       {message && <p>{message}</p>}
     </div>
   );
