@@ -9,7 +9,6 @@ function App() {
 
   const apiUrlBase = process.env.REACT_APP_API_URL;
 
-  // Fetch the VIN from localStorage when the component mounts
   useEffect(() => {
     const storedVin = localStorage.getItem('vin');
     if (storedVin) {
@@ -17,7 +16,6 @@ function App() {
     }
   }, []);
 
-  // Save the VIN to localStorage whenever it changes
   useEffect(() => {
     if (vin) {
       localStorage.setItem('vin', vin);
