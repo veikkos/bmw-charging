@@ -6,6 +6,9 @@ function App() {
   const [startTime, setStartTime] = useState('');
   const [stopTime, setStopTime] = useState('');
   const [message, setMessage] = useState('');
+  const [connected, setConnected] = useState(false);
+  const [charging, setCharging] = useState(false);
+  const [schedule, setSchedule] = useState({ startTime: '', stopTime: '' });
 
   const apiUrlBase = process.env.REACT_APP_API_URL;
 
@@ -18,9 +21,65 @@ function App() {
 
   useEffect(() => {
     if (vin) {
+      setMessage('Loading...');
       localStorage.setItem('vin', vin);
+      fetchCarStatus(vin);
+      fetchTimers(vin);
+    } else {
+      localStorage.removeItem('vin');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vin]);
+
+  const fetchCarStatus = async (vin) => {
+    try {
+      const response = await fetch(`${apiUrlBase}/carStatus?vin=${vin}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setConnected(data.status.isConnected);
+        setCharging(data.status.isCharging);
+        setMessage('');
+        return data.status
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to get car status');
+    }
+    return null
+  };
+
+  const fetchTimers = async (vin) => {
+    try {
+      const response = await fetch(`${apiUrlBase}/getTimers?vin=${vin}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.startTime && data.stopTime) {
+          setSchedule({ startTime: data.startTime, stopTime: data.stopTime });
+        } else {
+          setSchedule({ startTime: '', stopTime: '' });
+        }
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to get timers');
+    }
+  };
 
   const handleSetTimers = async () => {
     try {
@@ -39,7 +98,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(`Success: Timers set!`);
+        fetchTimers(vin);
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -63,7 +122,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Success: Timers cleared!');
+        setSchedule({ startTime: '', stopTime: '' });
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -72,7 +131,27 @@ function App() {
     }
   };
 
+  const pollCarStatus = async (vin, expectedChargingStatus, maxTries = 8) => {
+    let tries = 0;
+
+    while (tries < maxTries) {
+      setMessage('Waiting for car status...');
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      const status = await fetchCarStatus(vin);
+
+      if (status && status.isCharging === expectedChargingStatus) {
+        return;
+      }
+
+      tries++;
+    }
+
+    setMessage('Failed to meet expected car status');
+  };
+
   const handleStartCharging = async () => {
+    setMessage('Starting charging...');
+
     try {
       const response = await fetch(`${apiUrlBase}/startCharging`, {
         method: 'POST',
@@ -85,7 +164,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Success: Charging started!');
+        pollCarStatus(vin, true);
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -95,6 +174,8 @@ function App() {
   };
 
   const handleStopCharging = async () => {
+    setMessage('Stopping charging...');
+
     try {
       const response = await fetch(`${apiUrlBase}/stopCharging`, {
         method: 'POST',
@@ -107,7 +188,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Success: Charging stopped!');
+        pollCarStatus(vin, false);
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -116,91 +197,91 @@ function App() {
     }
   };
 
-  const handleCheckCarStatus = async () => {
-    try {
-      const response = await fetch(`${apiUrlBase}/carStatus?vin=${vin}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage(`Car Status: ${data.message}`);
-      } else {
-        setMessage(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      setMessage('Error: Unable to get car status');
-    }
-  };
-
-  const handleCheckTimers = async () => {
-    try {
-      const response = await fetch(`${apiUrlBase}/getTimers?vin=${vin}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (data.startTime && data.stopTime) {
-          setMessage(`Timers: Start in ${data.startTime}, Stop in ${data.stopTime}`);
-        } else {
-          setMessage('No timers set');
-        }
-      } else {
-        setMessage(`Error: ${data.error}`);
-      }
-    } catch (error) {
-      setMessage('Error: Unable to get timers');
-    }
-  };
-
   return (
-    <div className="App">
-      <h1>BMW Charging</h1>
-      <div className="form-group">
-        <label>Car:</label>
-        <input
-          type="text"
-          value={vin}
-          onChange={(e) => setVin(e.target.value)}
-          placeholder="VIN or part of the model"
-        />
+    <div className="w-full h-screen bg-background flex justify-center">
+      <div className="max-w-lg flex flex-col">
+        <h1 className="text-4xl font-bold text-center py-8">BMW Charging</h1>
+        <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col">
+          <h2 className="text-xl font-bold mb-4 text-gray-800">Car</h2>
+          <input
+            type="text"
+            value={vin}
+            onChange={(e) => setVin(e.target.value)}
+            placeholder="VIN or part of the model"
+            className="border border-gray-300 text-gray-600 p-2 rounded"
+          />
+        </div>
+
+        {/* Charging Status Card */}
+        {vin ? (
+          <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-row justify-between mt-8">
+            <div>
+              <h2 className="text-xl font-bold mb-4 text-gray-800">{connected ? "Connected" : "Not connected"}</h2>
+              <p className="text-lg text-gray-600">{charging ? 'Charging' : 'Not charging'}</p>
+            </div>
+            <div className='flex flex-col justify-end'>
+              <div>
+              {charging ? (
+                <button onClick={handleStopCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                  Stop
+                </button>
+              ) : (
+                <button onClick={handleStartCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                  Start
+                </button>
+              )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Current Schedule Card */}
+        {vin && schedule.startTime && schedule.stopTime ? (
+          <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col justify-between mt-8">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Current schedule</h2>
+            <div className="flex items-center space-x-4 text-gray-600 text-lg">
+              {schedule.startTime || '--:--'} <p className='text-gray-500 mx-2'>-</p> {schedule.stopTime || '--:--'}
+            </div>
+            <div>
+              <button onClick={handleClearTimers} className="mt-8 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Create Schedule Card */}
+        {vin && !schedule.startTime && !schedule.stopTime ? (
+          <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col justify-between mt-8">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Create schedule</h2>
+            <div className="flex items-center space-x-4 text-gray-600">
+              <input
+                type="text"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                placeholder="(hh:mm)"
+                disabled={!vin}
+                className="w-24 border border-gray-300 p-2 rounded"
+              />
+              <p className='text-gray-400 mx-2'>-</p>
+              <input
+                type="text"
+                value={stopTime}
+                onChange={(e) => setStopTime(e.target.value)}
+                placeholder="(hh:mm)"
+                disabled={!vin}
+                className="w-24 border border-gray-300 p-2 rounded"
+              />
+            </div>
+            <div>
+              <button onClick={handleSetTimers} className="mt-8 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Set
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {message && <p className="mt-4">{message}</p>}
       </div>
-      <div className="form-group">
-        <label>Start Time:</label>
-        <input
-          type="text"
-          value={startTime}
-          onChange={(e) => setStartTime(e.target.value)}
-          placeholder="(hh:mm)"
-          disabled={!vin}
-        />
-      </div>
-      <div className="form-group">
-        <label>Stop Time:</label>
-        <input
-          type="text"
-          value={stopTime}
-          onChange={(e) => setStopTime(e.target.value)}
-          placeholder="(hh:mm)"
-          disabled={!vin}
-        />
-      </div>
-      <button onClick={handleSetTimers} disabled={!vin}>Set Timers</button>
-      <button onClick={handleClearTimers} disabled={!vin}>Clear Timers</button>
-      <button onClick={handleStartCharging} disabled={!vin}>Start Charging</button>
-      <button onClick={handleStopCharging} disabled={!vin}>Stop Charging</button>
-      <button onClick={handleCheckCarStatus} disabled={!vin}>Check Car Status</button>
-      <button onClick={handleCheckTimers} disabled={!vin}>Check Current Timers</button>
-      {message && <p>{message}</p>}
     </div>
   );
 }
