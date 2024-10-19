@@ -1,9 +1,9 @@
 export const findBestChargingSlot = (prices, options = {}) => {
   const {
-    lowPriceMultiplier = 0.7,   // Low price threshold multiplier (default: 70% of average)
-    priceHikeThreshold = 1.2,   // Price hike threshold (default: 20% hike)
     maxChargingHours = 12,      // Maximum charging hours (default: 12)
-    latestStartHours = 8        // Start charging within the next X hours (default: 8)
+    minChargingHours = 3,       // Minimum charging hours (default: 3)
+    latestStartHours = 8,       // Start charging within the next X hours (default: 8)
+    priceHikeThreshold = 1.1    // Stop if the price increases by more than 10% compared to cheapest duration
   } = options;
 
   const now = new Date();
@@ -21,32 +21,33 @@ export const findBestChargingSlot = (prices, options = {}) => {
     return null;
   }
 
-  let bestResult = null;
-  let previousAveragePrice = Infinity;
+  const chargingResults = [];
 
-  const totalPrices = filteredPrices.length;
-  const totalPriceSum = filteredPrices.reduce((acc, price) => acc + price.priceWithTax, 0);
-  const averagePrice = totalPriceSum / totalPrices;
-  const lowPriceThreshold = averagePrice * lowPriceMultiplier;
-
-  for (let hours = 1; hours <= maxChargingHours; hours++) {
+  for (let hours = minChargingHours; hours <= maxChargingHours; hours++) {
     const result = calculateCharging(filteredPrices, hours, latestStartHours);
-
     if (result) {
-      const currentAveragePrice = parseFloat(result.averagePrice);
-
-      // Check if the current result is better or meets the "low price" condition
-      if (!bestResult || (currentAveragePrice < bestResult.averagePrice) || (currentAveragePrice < lowPriceThreshold)) {
-        bestResult = { ...result, duration: hours };
-      }
-
-      // Stop if the price hikes by more than the priceHikeThreshold and is above the low price threshold
-      if (currentAveragePrice > previousAveragePrice * priceHikeThreshold && currentAveragePrice > lowPriceThreshold) {
-        break;
-      }
-
-      previousAveragePrice = currentAveragePrice;
+      chargingResults.push({ ...result, duration: hours });
     }
+  }
+
+  // Find the longest reasonably cheap charging duration
+  let bestResult = null;
+  let bestAveragePrice = null;
+
+  for (const result of chargingResults) {
+    const currentAveragePrice = parseFloat(result.averagePrice);
+
+    if (!bestAveragePrice) {
+      bestAveragePrice = currentAveragePrice;
+      bestResult = result;
+      continue;
+    }
+
+    if (currentAveragePrice > bestAveragePrice * priceHikeThreshold) {
+      break;
+    }
+
+    bestResult = result;
   }
 
   return bestResult;
