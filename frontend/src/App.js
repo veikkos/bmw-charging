@@ -221,7 +221,7 @@ function App() {
     <div className="w-full min-h-screen bg-background flex justify-center py-8">
       <div className="max-w-lg flex flex-col">
         <h1 className="text-4xl font-bold text-center pb-8">BMW Charging</h1>
-        <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col">
+        <div className="bg-card shadow-lg rounded-lg p-6 flex flex-col">
           <h2 className="text-xl font-bold mb-4 text-gray-800">Car</h2>
           <input
             type="text"
@@ -241,7 +241,7 @@ function App() {
 
         {/* Charging Status Card */}
         {vin ? (
-          <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-row justify-between mt-8">
+          <div className="bg-card shadow-lg rounded-lg p-6 flex flex-row justify-between mt-8">
             <div>
               <h2 className="text-xl font-bold mb-4 text-gray-800">{connected ? "Connected" : "Not connected"}</h2>
               <p className="text-lg text-gray-600">{charging ? 'Charging' : 'Not charging'}</p>
@@ -264,7 +264,7 @@ function App() {
 
         {/* Current Schedule Card */}
         {vin && schedule.startTime && schedule.stopTime ? (
-          <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col justify-between mt-8">
+          <div className="bg-card shadow-lg rounded-lg p-6 flex flex-col justify-between mt-8">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Current schedule</h2>
             <div className="flex items-center space-x-4 text-gray-600 text-lg">
               {schedule.startTime || '--:--'} <p className='text-gray-500 mx-2'>-</p> {schedule.stopTime || '--:--'}
@@ -279,7 +279,7 @@ function App() {
 
         {/* Create Schedule Card */}
         {vin && !schedule.startTime && !schedule.stopTime ? (
-          <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col justify-between mt-8">
+          <div className="bg-card shadow-lg rounded-lg p-6 flex flex-col justify-between mt-8">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Create schedule</h2>
             <div className="flex items-center space-x-4 text-gray-600">
               <input
