@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { fetchSpotPrices } from './Spot';
+import { findBestChargingSlot } from './Optimize';
 
 function App() {
   const [vin, setVin] = useState('');
@@ -10,6 +12,7 @@ function App() {
   const [charging, setCharging] = useState(false);
   const [schedule, setSchedule] = useState({ startTime: '', stopTime: '' });
   const [imageSrc, setImageSrc] = useState('');
+  const [prices, setPrices] = useState(null);
 
   const apiUrlBase = process.env.REACT_APP_API_URL;
 
@@ -49,14 +52,14 @@ function App() {
         setConnected(data.status.isConnected);
         setCharging(data.status.isCharging);
         setMessage('');
-        return data.status
+        return data.status;
       } else {
         setMessage(`Error: ${data.error}`);
       }
     } catch (error) {
       setMessage('Error: Unable to get car status');
     }
-    return null
+    return null;
   };
 
   const fetchTimers = async (vin) => {
@@ -88,7 +91,6 @@ function App() {
     try {
       const response = await fetch(`${apiUrlBase}/vehicleImages?vin=${vin}&view=${view}`);
 
-      // Check if the response is OK
       if (response.ok) {
         const blob = await response.blob();
         const imageUrl = URL.createObjectURL(blob);
@@ -101,64 +103,31 @@ function App() {
     }
   };
 
-  const fetchSpotPrices = async () => {
-    try {
-      const response = await fetch('https://api.spot-hinta.fi/today');
-      if (response.ok) {
-        return await response.json();
-      } else {
-        setMessage('Error: Unable to fetch spot prices');
-        return null;
-      }
-    } catch (error) {
-      setMessage('Error: Unable to fetch spot prices');
-      return null;
-    }
-  };
-
-  const findBestChargingSlot = (prices, maxChargingHours) => {
-    let bestStart = null;
-    let bestEnd = null;
-    let bestAveragePrice = Infinity;
-
-    const parsedPrices = prices.map(price => ({
-      dateTime: new Date(price.DateTime),
-      priceWithTax: price.PriceWithTax
-    }));
-
-    parsedPrices.sort((a, b) => a.dateTime - b.dateTime);
-
-    for (let i = 0; i <= parsedPrices.length - maxChargingHours; i++) {
-      let totalPrice = 0;
-
-      for (let j = 0; j < maxChargingHours; j++) {
-        totalPrice += parsedPrices[i + j].priceWithTax;
-      }
-
-      const averagePrice = totalPrice / maxChargingHours;
-
-      if (averagePrice < bestAveragePrice) {
-        bestAveragePrice = averagePrice;
-        bestStart = parsedPrices[i].dateTime;
-        bestEnd = parsedPrices[i + maxChargingHours - 1].dateTime;
-      }
-    }
-
-    return {
-      startTime: bestStart.toTimeString().substring(0, 5),
-      endTime: bestEnd.toTimeString().substring(0, 5),
-      averagePrice: bestAveragePrice.toFixed(4)
-    };
-  };
-
   const handleOptimize = async () => {
     setMessage('Optimizing charging schedule...');
-    const prices = await fetchSpotPrices();
-    if (prices) {
-      const result = findBestChargingSlot(prices, 12);
-      setStartTime(result.startTime);
-      setStopTime(result.endTime);
-      setMessage(`Optimized: Average price: ${result.averagePrice * 1000} c/kWh`);
+
+    let currentPrices = prices;
+
+    if (!currentPrices) {
+      const spot = await fetchSpotPrices();
+      if (spot) {
+        setPrices(spot);
+        currentPrices = spot;
+      } else {
+        setMessage('Error fetching spot prices');
+        return;
+      }
+    }
+
+    if (currentPrices) {
+      const result = findBestChargingSlot(currentPrices, 8);
+      if (result) {
+        setStartTime(result.startTime);
+        setStopTime(result.endTime);
+        setMessage(`Optimized: Average price: ${(result.averagePrice * 1000).toFixed(2)} c/kWh`);
+      } else {
+        setMessage('Error optimizing charging schedule');
+      }
     }
   };
 
