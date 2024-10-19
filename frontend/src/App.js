@@ -248,15 +248,15 @@ function App() {
             </div>
             <div className='flex flex-col justify-end'>
               <div>
-              {charging ? (
-                <button onClick={handleStopCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                  Stop
-                </button>
-              ) : (
-                <button onClick={handleStartCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                  Start
-                </button>
-              )}
+                {charging ? (
+                  <button onClick={handleStopCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Stop
+                  </button>
+                ) : (
+                  <button onClick={handleStartCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                    Start
+                  </button>
+                )}
               </div>
             </div>
           </div>
