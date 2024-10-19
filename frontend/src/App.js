@@ -252,7 +252,6 @@ function App() {
       <div className="max-w-lg flex flex-col">
         <h1 className="text-4xl font-bold text-center pb-8">BMW Charging</h1>
         <div className="bg-card shadow-lg rounded-lg p-6 flex flex-col">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Car</h2>
           <input
             type="text"
             value={vin}
@@ -273,22 +272,26 @@ function App() {
         {vin ? (
           <div className="bg-card shadow-lg rounded-lg p-6 flex flex-row justify-between mt-8">
             <div>
-              <h2 className="text-xl font-bold mb-4 text-gray-800">{connected ? "Connected" : "Not connected"}</h2>
-              <p className="text-lg text-gray-600">{charging ? 'Charging' : 'Not charging'}</p>
+              <h2 className="text-xl font-bold text-gray-800">{connected ? "Connected" : "Not connected"}</h2>
+              {connected ? (
+                <p className="text-lg text-gray-600 mt-4">{charging ? 'Charging' : 'Not charging'}</p>
+              ) : null}
             </div>
-            <div className='flex flex-col justify-end'>
-              <div>
-                {charging ? (
-                  <button onClick={handleStopCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Stop
-                  </button>
-                ) : (
-                  <button onClick={handleStartCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                    Start
-                  </button>
-                )}
+            {connected ? (
+              <div className='flex flex-col justify-end'>
+                <div>
+                  {charging ? (
+                    <button onClick={handleStopCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                      Stop
+                    </button>
+                  ) : (
+                    <button onClick={handleStartCharging} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                      Start
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         ) : null}
 
