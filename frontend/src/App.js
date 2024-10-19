@@ -218,9 +218,9 @@ function App() {
   };
 
   return (
-    <div className="w-full h-screen bg-background flex justify-center">
+    <div className="w-full min-h-screen bg-background flex justify-center py-8">
       <div className="max-w-lg flex flex-col">
-        <h1 className="text-4xl font-bold text-center py-8">BMW Charging</h1>
+        <h1 className="text-4xl font-bold text-center pb-8">BMW Charging</h1>
         <div className="bg-card shadow-lg rounded-lg p-6 max-w-sm flex flex-col">
           <h2 className="text-xl font-bold mb-4 text-gray-800">Car</h2>
           <input
