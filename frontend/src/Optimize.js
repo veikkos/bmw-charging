@@ -1,4 +1,11 @@
-export const findBestChargingSlot = (prices) => {
+export const findBestChargingSlot = (prices, options = {}) => {
+  const {
+    lowPriceMultiplier = 0.7,   // Low price threshold multiplier (default: 70% of average)
+    priceHikeThreshold = 1.2,   // Price hike threshold (default: 20% hike)
+    maxChargingHours = 12,      // Maximum charging hours (default: 12)
+    latestStartHours = 8        // Start charging within the next X hours (default: 8)
+  } = options;
+
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -20,10 +27,10 @@ export const findBestChargingSlot = (prices) => {
   const totalPrices = filteredPrices.length;
   const totalPriceSum = filteredPrices.reduce((acc, price) => acc + price.priceWithTax, 0);
   const averagePrice = totalPriceSum / totalPrices;
-  const lowPriceThreshold = averagePrice * 0.8; // Set "low price" to 80% of the average price
+  const lowPriceThreshold = averagePrice * lowPriceMultiplier;
 
-  for (let hours = 1; hours <= 12; hours++) {
-    const result = calculateCharging(filteredPrices, hours);
+  for (let hours = 1; hours <= maxChargingHours; hours++) {
+    const result = calculateCharging(filteredPrices, hours, latestStartHours);
 
     if (result) {
       const currentAveragePrice = parseFloat(result.averagePrice);
@@ -33,8 +40,8 @@ export const findBestChargingSlot = (prices) => {
         bestResult = { ...result, duration: hours };
       }
 
-      // Stop if the price hikes by more than 20% and is above the low price threshold
-      if (currentAveragePrice > previousAveragePrice * 1.2 && currentAveragePrice > lowPriceThreshold) {
+      // Stop if the price hikes by more than the priceHikeThreshold and is above the low price threshold
+      if (currentAveragePrice > previousAveragePrice * priceHikeThreshold && currentAveragePrice > lowPriceThreshold) {
         break;
       }
 
@@ -45,12 +52,12 @@ export const findBestChargingSlot = (prices) => {
   return bestResult;
 };
 
-const calculateCharging = (prices, maxChargingHours) => {
+const calculateCharging = (prices, maxChargingHours, latestStartHours) => {
   let bestStart = null;
   let bestEnd = null;
   let bestAveragePrice = Infinity;
 
-  for (let i = 0; i <= prices.length - maxChargingHours; i++) {
+  for (let i = 0; i <= Math.min(latestStartHours - 1, prices.length - maxChargingHours); i++) {
     let totalPrice = 0;
 
     for (let j = 0; j < maxChargingHours; j++) {
