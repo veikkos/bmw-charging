@@ -101,6 +101,67 @@ function App() {
     }
   };
 
+  const fetchSpotPrices = async () => {
+    try {
+      const response = await fetch('https://api.spot-hinta.fi/today');
+      if (response.ok) {
+        return await response.json();
+      } else {
+        setMessage('Error: Unable to fetch spot prices');
+        return null;
+      }
+    } catch (error) {
+      setMessage('Error: Unable to fetch spot prices');
+      return null;
+    }
+  };
+
+  const findBestChargingSlot = (prices, maxChargingHours) => {
+    let bestStart = null;
+    let bestEnd = null;
+    let bestAveragePrice = Infinity;
+
+    const parsedPrices = prices.map(price => ({
+      dateTime: new Date(price.DateTime),
+      priceWithTax: price.PriceWithTax
+    }));
+
+    parsedPrices.sort((a, b) => a.dateTime - b.dateTime);
+
+    for (let i = 0; i <= parsedPrices.length - maxChargingHours; i++) {
+      let totalPrice = 0;
+
+      for (let j = 0; j < maxChargingHours; j++) {
+        totalPrice += parsedPrices[i + j].priceWithTax;
+      }
+
+      const averagePrice = totalPrice / maxChargingHours;
+
+      if (averagePrice < bestAveragePrice) {
+        bestAveragePrice = averagePrice;
+        bestStart = parsedPrices[i].dateTime;
+        bestEnd = parsedPrices[i + maxChargingHours - 1].dateTime;
+      }
+    }
+
+    return {
+      startTime: bestStart.toTimeString().substring(0, 5),
+      endTime: bestEnd.toTimeString().substring(0, 5),
+      averagePrice: bestAveragePrice.toFixed(4)
+    };
+  };
+
+  const handleOptimize = async () => {
+    setMessage('Optimizing charging schedule...');
+    const prices = await fetchSpotPrices();
+    if (prices) {
+      const result = findBestChargingSlot(prices, 12);
+      setStartTime(result.startTime);
+      setStopTime(result.endTime);
+      setMessage(`Optimized: Average price: ${result.averagePrice * 1000} c/kWh`);
+    }
+  };
+
   const handleSetTimers = async () => {
     try {
       const response = await fetch(`${apiUrlBase}/setTimers`, {
@@ -303,6 +364,9 @@ function App() {
             <div>
               <button onClick={handleSetTimers} className="mt-8 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                 Set
+              </button>
+              <button onClick={handleOptimize} className="mt-8 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ml-4">
+                Optimize
               </button>
             </div>
           </div>
