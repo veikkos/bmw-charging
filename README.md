@@ -109,7 +109,7 @@ The backend uses environment variables to configure CORS and other settings.
     ```json
     {
       "vin": "your-vin-number",
-      "view": "SideViewLeft|RearView|FrontView|SideViewRight"
+      "view": "SideViewLeft|RearView|FrontView|SideViewRight|VehicleStatus|Dashboard"
     }
     ```
 
