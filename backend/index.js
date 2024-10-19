@@ -201,7 +201,7 @@ app.get('/getTimers', (req, res) => {
     });
 });
 
-app.get('/carStatus', async (req, res) => {
+app.get('/vehicleStatus', async (req, res) => {
     const { vin } = req.query;
 
     if (!vin) {
@@ -230,6 +230,35 @@ app.get('/carStatus', async (req, res) => {
     } catch (error) {
         console.error(`Error retrieving car status for VIN: ${vin}:`, error);
         res.status(500).json({ error: `Failed to retrieve car status for VIN: ${vin}` });
+    }
+});
+
+app.get('/vehicleImages', async (req, res) => {
+    const { vin, view } = req.query;
+
+    if (!vin || !view) {
+        return res.status(400).json({ error: 'VIN and view are required to retrieve the vehicle image' });
+    }
+
+    try {
+        // The client does not expose convenience methods to get vehicle images but it can
+        // be found by using the internal API
+        const vehicles = await bmwClient.vehicles(vin);
+
+        for (const vehicle of vehicles) {
+            const imageBuffer = await bmwClient.bmwClientAPI.vehicleImages(vehicle.vin, view);
+
+            if (imageBuffer) {
+                res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
+                res.set('Content-Type', 'image/png');
+                return res.send(Buffer.from(imageBuffer))
+            }
+        }
+
+        res.status(500).json({ error: 'Unable to find the image' });
+    } catch (error) {
+        console.error('Error fetching vehicle image:', error);
+        res.status(500).json({ error: 'Failed to retrieve vehicle image' });
     }
 });
 

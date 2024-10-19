@@ -9,6 +9,7 @@ function App() {
   const [connected, setConnected] = useState(false);
   const [charging, setCharging] = useState(false);
   const [schedule, setSchedule] = useState({ startTime: '', stopTime: '' });
+  const [imageSrc, setImageSrc] = useState('');
 
   const apiUrlBase = process.env.REACT_APP_API_URL;
 
@@ -25,15 +26,17 @@ function App() {
       localStorage.setItem('vin', vin);
       fetchCarStatus(vin);
       fetchTimers(vin);
+      fetchVehicleImage(vin, 'FrontView');
     } else {
       localStorage.removeItem('vin');
+      setImageSrc('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vin]);
 
   const fetchCarStatus = async (vin) => {
     try {
-      const response = await fetch(`${apiUrlBase}/carStatus?vin=${vin}`, {
+      const response = await fetch(`${apiUrlBase}/vehicleStatus?vin=${vin}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -78,6 +81,23 @@ function App() {
       }
     } catch (error) {
       setMessage('Error: Unable to get timers');
+    }
+  };
+
+  const fetchVehicleImage = async (vin, view) => {
+    try {
+      const response = await fetch(`${apiUrlBase}/vehicleImages?vin=${vin}&view=${view}`);
+
+      // Check if the response is OK
+      if (response.ok) {
+        const blob = await response.blob();
+        const imageUrl = URL.createObjectURL(blob);
+        setImageSrc(imageUrl);
+      } else {
+        setMessage(`Error: Unable to fetch vehicle image`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to fetch vehicle image');
     }
   };
 
@@ -211,6 +231,13 @@ function App() {
             className="border border-gray-300 text-gray-600 p-2 rounded"
           />
         </div>
+
+        {/* Display the vehicle image */}
+        {imageSrc && (
+          <div className="mt-8">
+            <img src={imageSrc} alt="Vehicle" className="w-full" />
+          </div>
+        )}
 
         {/* Charging Status Card */}
         {vin ? (
