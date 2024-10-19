@@ -6,6 +6,8 @@ The app is very rudimental but allows setting explicit start and stop times for 
 
 Please note that the app is not officially supported by BMW and may not work with all BMW vehicles. It was developed for my personal use and is provided as-is.
 
+The application supports simple automated charging cost optimization using https://spot-hinta.fi/.
+
 The app has been implemented with the help of AI.
 
 ## Prerequisites
@@ -25,11 +27,9 @@ The frontend uses environment variables to configure the API URL.
 
     ```
     REACT_APP_API_URL=http://localhost:3000
-    REACT_APP_VIN=ABCDE
     ```
 
     - Replace `http://localhost:3000` with the URL where your backend server is running.
-    - Replace `ABCDE` with the vehicle's VIN or part of its model name like 'i4'.
 
 ### Backend
 
@@ -45,25 +45,7 @@ The backend uses environment variables to configure CORS and other settings.
 
 2. Create `~/.bmw` as explained in https://github.com/colinbendell/bmw.
 
----
-
-## Backend Setup and Run
-
-### 1. Install dependencies
-
-Navigate to the `backend/` directory and run the following command to install dependencies:
-
-`cd backend/ && npm install`
-
-### 2. Start the backend server
-
-To start the backend server, run:
-
-`npm start`
-
-The backend will now be running on port `3000` by default.
-
-### 3. Endpoints
+## Backend Endpoints
 
 - **`/setTimers`** (POST)
   - **Description**: Set start and stop timers for vehicle charging.
@@ -112,7 +94,7 @@ The backend will now be running on port `3000` by default.
     }
     ```
 
-- **`/carStatus`** (GET)
+- **`/vehicleStatus`** (GET)
   - **Description**: Fetches the current status of the vehicle (connected, charging, etc.).
   - **Query Parameters**:
     ```json
@@ -121,32 +103,26 @@ The backend will now be running on port `3000` by default.
     }
     ```
 
----
+- **`/vehicleImages`** (GET)
+  - **Description**: Fetches vehicle images (PNG).
+  - **Query Parameters**:
+    ```json
+    {
+      "vin": "your-vin-number",
+      "view": "SideViewLeft|RearView|FrontView|SideViewRight"
+    }
+    ```
 
-## Frontend Setup and Run
+## Development Setup
 
 ### 1. Install dependencies
 
-Navigate to the `frontend/` directory and run the following command to install dependencies:
+`npm run install:all`
 
-`cd frontend/ && npm install`
-
-### 2. Start the frontend (development)
+### 2. Start the development setup (frontend + backend)
 
 To run the frontend in development mode, use:
 
 `npm start`
 
-This will start the frontend on port `8091` by default.
-
-### 3. Build the frontend (production)
-
-To create a production build of the frontend, run:
-
-`npm run build`
-
-This will output a production build in the `frontend/build/` directory.
-
-### 4. Serve the frontend (production)
-
-`npm run serve`
+This will start the frontend on port `8091` and the backend on port `3000`.
