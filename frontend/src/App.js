@@ -124,7 +124,7 @@ function App() {
       if (result) {
         setStartTime(result.startTime);
         setStopTime(result.endTime);
-        setMessage(`Optimized: Average price: ${(result.averagePrice * 1000).toFixed(2)} c/kWh`);
+        setMessage(`Optimized average price: ${(result.averagePrice * 1000).toFixed(2)} c/kWh`);
       } else {
         setMessage('Error optimizing charging schedule');
       }
@@ -149,6 +149,7 @@ function App() {
 
       if (response.ok) {
         fetchTimers(vin);
+        setMessage('');
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -173,6 +174,7 @@ function App() {
 
       if (response.ok) {
         setSchedule({ startTime: '', stopTime: '' });
+        setMessage('');
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -215,6 +217,7 @@ function App() {
 
       if (response.ok) {
         pollCarStatus(vin, true);
+        setMessage('');
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -239,6 +242,7 @@ function App() {
 
       if (response.ok) {
         pollCarStatus(vin, false);
+        setMessage('');
       } else {
         setMessage(`Error: ${data.error}`);
       }
