@@ -3,7 +3,8 @@ export const findBestChargingSlot = (prices, options = {}) => {
     maxChargingHours = 12,      // Maximum charging hours (default: 12)
     minChargingHours = 3,       // Minimum charging hours (default: 3)
     latestStartHours = 8,       // Start charging within the next X hours (default: 8)
-    priceHikeThreshold = 1.1    // Stop if the price increases by more than 10% compared to cheapest duration
+    priceHikeThreshold = 1.1,   // Stop if the price increases by more than 10% compared to cheapest duration
+    minimumAvgPrice = 0.01      // Minimum average price to consider (default: 0.01 eur/kWh)
   } = options;
 
   const now = new Date();
@@ -43,7 +44,7 @@ export const findBestChargingSlot = (prices, options = {}) => {
       continue;
     }
 
-    if (currentAveragePrice > bestAveragePrice * priceHikeThreshold) {
+    if (currentAveragePrice > bestAveragePrice * priceHikeThreshold && currentAveragePrice >= minimumAvgPrice) {
       break;
     }
 
