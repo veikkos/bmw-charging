@@ -75,9 +75,13 @@ const calculateCharging = (prices, maxChargingHours, latestStartHours) => {
     }
   }
 
-  return {
-    startTime: bestStart.toTimeString().substring(0, 5),
-    endTime: bestEnd.toTimeString().substring(0, 5),
-    averagePrice: bestAveragePrice.toFixed(4)
-  };
+  if (!bestStart) {
+    return null
+  } else {
+    return {
+      startTime: bestStart.toTimeString().substring(0, 5),
+      endTime: bestEnd.toTimeString().substring(0, 5),
+      averagePrice: bestAveragePrice.toFixed(4)
+    };
+  }
 };
