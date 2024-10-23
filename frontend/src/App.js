@@ -124,7 +124,7 @@ function App() {
       if (result) {
         setStartTime(result.startTime);
         setStopTime(result.endTime);
-        setMessage(`Optimized average price: ${(result.averagePrice * 1000).toFixed(2)} c/kWh`);
+        setMessage(`Optimized average price: ${(result.averagePrice * 100).toFixed(2)} c/kWh`);
       } else {
         setMessage('Error optimizing charging schedule');
       }
