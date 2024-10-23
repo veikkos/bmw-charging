@@ -31,6 +31,8 @@ export const findBestChargingSlot = (prices, options = {}) => {
     }
   }
 
+  console.log(chargingResults);
+
   // Find the longest reasonably cheap charging duration
   let bestResult = null;
   let bestAveragePrice = null;
@@ -50,6 +52,8 @@ export const findBestChargingSlot = (prices, options = {}) => {
 
     bestResult = result;
   }
+
+  console.log(bestResult);
 
   return bestResult;
 };
