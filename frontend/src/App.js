@@ -10,6 +10,7 @@ function App() {
   const [message, setMessage] = useState('');
   const [connected, setConnected] = useState(false);
   const [charging, setCharging] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState(0);
   const [schedule, setSchedule] = useState({ startTime: '', stopTime: '' });
   const [imageSrc, setImageSrc] = useState('');
   const [prices, setPrices] = useState(null);
@@ -51,6 +52,7 @@ function App() {
       if (response.ok) {
         setConnected(data.status.isConnected);
         setCharging(data.status.isCharging);
+        setBatteryLevel(data.status.chargingLevelPercent);
         setMessage('');
         return data.status;
       } else {
@@ -277,10 +279,10 @@ function App() {
           <div className={`shadow-lg rounded-lg p-6 flex flex-row justify-between mt-8 ${charging ? 'pulse bg-charging' : 'bg-card'}`}>
             <div>
               <h2 className={`text-xl font-bold ${charging ? 'text-gray-200' : 'text-gray-800'}`}>
-                {connected ? "Connected" : "Not connected"}
+                {connected ? batteryLevel ? `Connected (${batteryLevel}%)` : "Connected" : "Not connected"}
               </h2>
               {connected ? (
-                <p className={`text-lg mt-4 ${charging ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-lg mt-4 ${charging ? 'text-gray-300' : 'text-gray-600'}`}>
                   {charging ? 'Charging' : 'Not charging'}
                 </p>
               ) : null}
@@ -289,7 +291,7 @@ function App() {
               <div className='flex flex-col justify-end'>
                 <div>
                   {charging ? (
-                    <button onClick={handleStopCharging} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-500">
+                    <button onClick={handleStopCharging} className="bg-blue-600 text-gray-200 px-4 py-2 rounded hover:bg-blue-500">
                       Stop
                     </button>
                   ) : (
