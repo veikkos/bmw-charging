@@ -76,11 +76,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
-        if (data.startTime && data.stopTime) {
-          setSchedule({ startTime: data.startTime, stopTime: data.stopTime });
-        } else {
-          setSchedule({ startTime: '', stopTime: '' });
-        }
+        setSchedule({ startTime: data.startTime ? data.startTime : '', stopTime: data.stopTime ? data.stopTime : '' });
       } else {
         setMessage(`Error: ${data.error}`);
       }
@@ -306,7 +302,7 @@ function App() {
         ) : null}
 
         {/* Current Schedule Card */}
-        {vin && schedule.startTime && schedule.stopTime ? (
+        {vin && (schedule.startTime || schedule.stopTime) ? (
           <div className="bg-card shadow-lg rounded-lg p-6 flex flex-col justify-between mt-8">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Current schedule</h2>
             <div className="flex items-center space-x-4 text-gray-600 text-lg">
