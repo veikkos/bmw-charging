@@ -275,7 +275,9 @@ function App() {
           <div className={`shadow-lg rounded-lg p-6 flex flex-row justify-between mt-8 ${charging ? 'pulse bg-charging' : 'bg-card'}`}>
             <div>
               <h2 className={`text-xl font-bold ${charging ? 'text-gray-200' : 'text-gray-800'}`}>
-                {connected ? batteryLevel ? `Connected (${batteryLevel}%)` : "Connected" : "Not connected"}
+                {connected ?
+                  batteryLevel ? `Connected (${batteryLevel}%)` : "Connected" :
+                  batteryLevel ? `Not connected (${batteryLevel}%)` : "Not connected"}
               </h2>
               {connected ? (
                 <p className={`text-lg mt-4 ${charging ? 'text-gray-300' : 'text-gray-600'}`}>
