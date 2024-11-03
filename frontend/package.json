@@ -10,7 +10,9 @@
   "scripts": {
     "start": "PORT=8091 react-scripts start",
     "build": "react-scripts build",
-    "serve": "serve -s build -l 8091"
+    "serve": "serve -s build -l 8091",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "eslintConfig": {
     "extends": [
@@ -30,7 +32,11 @@
     ]
   },
   "devDependencies": {
+    "@storybook/addon-essentials": "^8.4.1",
+    "@storybook/preset-create-react-app": "^8.4.1",
+    "@storybook/react-webpack5": "^8.4.1",
     "serve": "^14.2.3",
+    "storybook": "^8.4.1",
     "tailwindcss": "^3.4.14"
   }
 }
