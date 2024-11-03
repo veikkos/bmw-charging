@@ -34,6 +34,11 @@ function createTimerObject() {
     };
 }
 
+async function getFullVin(vin) {
+    const vehicleDetails = await bmwClient.vehicleDetails(vin);
+    return vehicleDetails[0]?.vin;
+}
+
 // Helper function to convert hh:mm to milliseconds from now
 function calculateDelay(hhmm) {
     const [hours, minutes] = hhmm.split(':').map(Number);
@@ -59,17 +64,22 @@ function clearTimerIfNeeded(timerObj) {
     }
 }
 
-app.post('/setTimers', (req, res) => {
+app.post('/setTimers', async (req, res) => {
     const { startTime, stopTime, vin } = req.body;
 
     if (!startTime || !stopTime || !vin) {
         return res.status(400).json({ error: 'Start time, stop time, and VIN are required' });
     }
 
-    let timers = vinTimersMap.get(vin);
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
+    let timers = vinTimersMap.get(fullVin);
     if (!timers) {
         timers = createTimerObject();
-        vinTimersMap.set(vin, timers);
+        vinTimersMap.set(fullVin, timers);
     }
 
     const { startTimerObj, stopTimerObj } = timers;
@@ -88,12 +98,12 @@ app.post('/setTimers', (req, res) => {
     stopTimerObj.timeSet = stopTime;
 
     startTimerObj.timer = setTimeout(async () => {
-        console.log(`Start timer triggered: Starting charging for VIN: ${vin}`);
+        console.log(`Start timer triggered: Starting charging for VIN: ${fullVin}`);
         try {
-            await bmwClient.startCharging(vin);
-            console.log(`Charging started for vehicle with VIN: ${vin}`);
+            await bmwClient.startCharging(fullVin);
+            console.log(`Charging started for vehicle with VIN: ${fullVin}`);
         } catch (error) {
-            console.error(`Error starting charging for VIN: ${vin}:`, error);
+            console.error(`Error starting charging for VIN: ${fullVin}:`, error);
             clearTimerIfNeeded(stopTimerObj);
         }
 
@@ -101,31 +111,36 @@ app.post('/setTimers', (req, res) => {
     }, startTimerObj.delay);
 
     stopTimerObj.timer = setTimeout(async () => {
-        console.log(`Stop timer triggered: Stopping charging for VIN: ${vin}`);
+        console.log(`Stop timer triggered: Stopping charging for VIN: ${fullVin}`);
         try {
-            await bmwClient.stopCharging(vin);
-            console.log(`Charging stopped for vehicle with VIN: ${vin}`);
+            await bmwClient.stopCharging(fullVin);
+            console.log(`Charging stopped for vehicle with VIN: ${fullVin}`);
         } catch (error) {
-            console.error(`Error stopping charging for VIN: ${vin}:`, error);
+            console.error(`Error stopping charging for VIN: ${fullVin}:`, error);
         }
 
         clearTimerIfNeeded(stopTimerObj);
-        vinTimersMap.delete(vin);
+        vinTimersMap.delete(fullVin);
     }, stopTimerObj.delay);
 
-    console.log(`Timers set for VIN ${vin}: Start in ${startTimerObj.delay / 1000} s, Stop in ${stopTimerObj.delay / 1000} s`);
+    console.log(`Timers set for VIN ${fullVin}: Start in ${startTimerObj.delay / 1000} s, Stop in ${stopTimerObj.delay / 1000} s`);
 
-    res.json({ message: 'Timers set successfully', vin, startDelay: startTimerObj.delay, stopDelay: stopTimerObj.delay });
+    res.json({ message: 'Timers set successfully', vin: fullVin, startDelay: startTimerObj.delay, stopDelay: stopTimerObj.delay });
 });
 
-app.post('/clearTimers', (req, res) => {
+app.post('/clearTimers', async (req, res) => {
     const { vin } = req.body;
 
     if (!vin) {
         return res.status(400).json({ error: 'VIN is required to clear timers' });
     }
 
-    const timers = vinTimersMap.get(vin);
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
+    const timers = vinTimersMap.get(fullVin);
     if (!timers) {
         return res.status(404).json({ error: 'No timers found for this VIN' });
     }
@@ -135,9 +150,9 @@ app.post('/clearTimers', (req, res) => {
     clearTimerIfNeeded(startTimerObj);
     clearTimerIfNeeded(stopTimerObj);
 
-    vinTimersMap.delete(vin);
+    vinTimersMap.delete(fullVin);
 
-    res.json({ message: `Timers cleared for VIN: ${vin}` });
+    res.json({ message: `Timers cleared for VIN: ${fullVin}` });
 });
 
 app.post('/startCharging', async (req, res) => {
@@ -147,12 +162,17 @@ app.post('/startCharging', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to start charging' });
     }
 
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
     try {
-        await bmwClient.startCharging(vin);
-        console.log(`Charging started for vehicle with VIN: ${vin}`);
+        await bmwClient.startCharging(fullVin);
+        console.log(`Charging started for vehicle with VIN: ${fullVin}`);
         res.json({ message: 'Charging started successfully' });
     } catch (error) {
-        console.error('Error starting charging:', error);
+        console.error(`Error starting charging for VIN: ${fullVin}:`, error);
         res.status(500).json({ error: 'Failed to start charging' });
     }
 });
@@ -164,24 +184,34 @@ app.post('/stopCharging', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to stop charging' });
     }
 
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
     try {
-        await bmwClient.stopCharging(vin);
-        console.log(`Charging stopped for vehicle with VIN: ${vin}`);
+        await bmwClient.stopCharging(fullVin);
+        console.log(`Charging stopped for vehicle with VIN: ${fullVin}`);
         res.json({ message: 'Charging stopped successfully' });
     } catch (error) {
-        console.error('Error stopping charging:', error);
+        console.error(`Error stopping charging for VIN: ${fullVin}:`, error);
         res.status(500).json({ error: 'Failed to stop charging' });
     }
 });
 
-app.get('/getTimers', (req, res) => {
+app.get('/getTimers', async (req, res) => {
     const { vin } = req.query;
 
     if (!vin) {
         return res.status(400).json({ error: 'VIN is required to get timers' });
     }
 
-    const timers = vinTimersMap.get(vin);
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
+    const timers = vinTimersMap.get(fullVin);
     if (!timers) {
         return res.json({ message: 'No timers are currently set for this VIN.' });
     }
@@ -193,7 +223,7 @@ app.get('/getTimers', (req, res) => {
     const stopTimerRemaining = stopTimerObj.timer ? Math.max(0, stopTimerObj.delay - (currentTime - new Date().getTime())) : null;
 
     res.json({
-        message: `Timers are currently set for VIN: ${vin}.`,
+        message: `Timers are currently set for VIN: ${fullVin}.`,
         startTime: startTimerObj.timeSet,
         stopTime: stopTimerObj.timeSet,
         startTimerRemaining: startTimerRemaining ? `${Math.floor(startTimerRemaining / 1000)} seconds remaining` : 'N/A',
@@ -208,8 +238,13 @@ app.get('/vehicleStatus', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to check car status' });
     }
 
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
     try {
-        const vehicleDetails = await bmwClient.vehicleDetails(vin);
+        const vehicleDetails = await bmwClient.vehicleDetails(fullVin);
 
         const vehicleState = vehicleDetails[0]?.state;
         const electricChargingState = vehicleState?.electricChargingState;
@@ -228,8 +263,8 @@ app.get('/vehicleStatus', async (req, res) => {
 
         res.json({ message, status });
     } catch (error) {
-        console.error(`Error retrieving car status for VIN: ${vin}:`, error);
-        res.status(500).json({ error: `Failed to retrieve car status for VIN: ${vin}` });
+        console.error(`Error retrieving car status for VIN: ${fullVin}:`, error);
+        res.status(500).json({ error: `Failed to retrieve car status for VIN: ${fullVin}` });
     }
 });
 
@@ -240,10 +275,15 @@ app.get('/vehicleImages', async (req, res) => {
         return res.status(400).json({ error: 'VIN and view are required to retrieve the vehicle image' });
     }
 
+    const fullVin = await getFullVin(vin);
+    if (!fullVin) {
+        return res.status(404).json({ error: 'VIN not found' });
+    }
+
     try {
         // The client does not expose convenience methods to get vehicle images but it can
         // be found by using the internal API
-        const vehicles = await bmwClient.vehicles(vin);
+        const vehicles = await bmwClient.vehicles(fullVin);
 
         for (const vehicle of vehicles) {
             const imageBuffer = await bmwClient.bmwClientAPI.vehicleImages(vehicle.vin, view);
@@ -251,13 +291,13 @@ app.get('/vehicleImages', async (req, res) => {
             if (imageBuffer) {
                 res.set('Cache-Control', 'public, max-age=86400, must-revalidate');
                 res.set('Content-Type', 'image/png');
-                return res.send(Buffer.from(imageBuffer))
+                return res.send(Buffer.from(imageBuffer));
             }
         }
 
         res.status(500).json({ error: 'Unable to find the image' });
     } catch (error) {
-        console.error('Error fetching vehicle image:', error);
+        console.error(`Error fetching vehicle image for VIN: ${fullVin}:`, error);
         res.status(500).json({ error: 'Failed to retrieve vehicle image' });
     }
 });
