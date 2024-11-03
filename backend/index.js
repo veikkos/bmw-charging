@@ -238,13 +238,8 @@ app.get('/vehicleStatus', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to check car status' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
-    }
-
     try {
-        const vehicleDetails = await bmwClient.vehicleDetails(fullVin);
+        const vehicleDetails = await bmwClient.vehicleDetails(vin);
 
         const vehicleState = vehicleDetails[0]?.state;
         const electricChargingState = vehicleState?.electricChargingState;
@@ -263,8 +258,8 @@ app.get('/vehicleStatus', async (req, res) => {
 
         res.json({ message, status });
     } catch (error) {
-        console.error(`Error retrieving car status for VIN: ${fullVin}:`, error);
-        res.status(500).json({ error: `Failed to retrieve car status for VIN: ${fullVin}` });
+        console.error(`Error retrieving car status for VIN: ${vin}:`, error);
+        res.status(500).json({ error: `Failed to retrieve car status for VIN: ${vin}` });
     }
 });
 
