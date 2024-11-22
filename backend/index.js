@@ -297,7 +297,9 @@ app.get('/vehicleImages', async (req, res) => {
     }
 });
 
-
-app.listen(port, () => {
-    console.log(`Timer API running on http://localhost:${port}`);
-});
+bmwClient.login()
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`Timer API running on http://localhost:${port}`);
+        });
+    })
