@@ -263,7 +263,7 @@ app.get('/vehicleStatus', async (req, res) => {
     }
 
     try {
-        const vehicleDetails = await bmwClient.vehicleDetails(vin);
+        const vehicleDetails = await bmwClient.vehicleDetails(vin, false);
 
         const vehicleState = vehicleDetails[0]?.state;
         const electricChargingState = vehicleState?.electricChargingState;
