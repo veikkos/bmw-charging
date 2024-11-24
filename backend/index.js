@@ -64,6 +64,25 @@ function clearTimerIfNeeded(timerObj) {
     }
 }
 
+async function fetchFullVin(vin) {
+    if (!vin) {
+        return { error: { status: 400, message: 'VIN is required' } };
+    }
+
+    let fullVin;
+    try {
+        fullVin = await getFullVin(vin);
+    } catch (error) {
+        return { error: { status: 500, message: `Failed to retrieve VIN: ${vin}` } };
+    }
+
+    if (!fullVin) {
+        return { error: { status: 404, message: 'VIN not found' } };
+    }
+
+    return { fullVin };
+}
+
 app.post('/setTimers', async (req, res) => {
     const { startTime, stopTime, vin } = req.body;
 
@@ -71,10 +90,11 @@ app.post('/setTimers', async (req, res) => {
         return res.status(400).json({ error: 'Start time, stop time, and VIN are required' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
+    const vinFetchResult = await fetchFullVin(vin);
+    if (vinFetchResult.error) {
+        return res.status(vinFetchResult.error.status).json({ error: vinFetchResult.error.message });
     }
+    const { fullVin } = vinFetchResult;
 
     let timers = vinTimersMap.get(fullVin);
     if (!timers) {
@@ -135,10 +155,11 @@ app.post('/clearTimers', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to clear timers' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
+    const vinFetchResult = await fetchFullVin(vin);
+    if (vinFetchResult.error) {
+        return res.status(vinFetchResult.error.status).json({ error: vinFetchResult.error.message });
     }
+    const { fullVin } = vinFetchResult;
 
     const timers = vinTimersMap.get(fullVin);
     if (!timers) {
@@ -162,10 +183,11 @@ app.post('/startCharging', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to start charging' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
+    const vinFetchResult = await fetchFullVin(vin);
+    if (vinFetchResult.error) {
+        return res.status(vinFetchResult.error.status).json({ error: vinFetchResult.error.message });
     }
+    const { fullVin } = vinFetchResult;
 
     try {
         await bmwClient.startCharging(fullVin);
@@ -184,10 +206,11 @@ app.post('/stopCharging', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to stop charging' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
+    const vinFetchResult = await fetchFullVin(vin);
+    if (vinFetchResult.error) {
+        return res.status(vinFetchResult.error.status).json({ error: vinFetchResult.error.message });
     }
+    const { fullVin } = vinFetchResult;
 
     try {
         await bmwClient.stopCharging(fullVin);
@@ -206,10 +229,11 @@ app.get('/getTimers', async (req, res) => {
         return res.status(400).json({ error: 'VIN is required to get timers' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
+    const vinFetchResult = await fetchFullVin(vin);
+    if (vinFetchResult.error) {
+        return res.status(vinFetchResult.error.status).json({ error: vinFetchResult.error.message });
     }
+    const { fullVin } = vinFetchResult;
 
     const timers = vinTimersMap.get(fullVin);
     if (!timers) {
@@ -270,10 +294,11 @@ app.get('/vehicleImages', async (req, res) => {
         return res.status(400).json({ error: 'VIN and view are required to retrieve the vehicle image' });
     }
 
-    const fullVin = await getFullVin(vin);
-    if (!fullVin) {
-        return res.status(404).json({ error: 'VIN not found' });
+    const vinFetchResult = await fetchFullVin(vin);
+    if (vinFetchResult.error) {
+        return res.status(vinFetchResult.error.status).json({ error: vinFetchResult.error.message });
     }
+    const { fullVin } = vinFetchResult;
 
     try {
         // The client does not expose convenience methods to get vehicle images but it can
