@@ -47,6 +47,15 @@ The backend uses environment variables to configure CORS and other settings.
 
 ## Backend Endpoints
 
+- **`/login`** (POST)
+  - **Description**: Provide a fresh hCaptcha token for the initial login and if the login ever expires.
+  - **Body**:
+    ```json
+    {
+      "hcaptchatoken": "fresh-hcaptcha-token"
+    }
+    ```
+
 - **`/setTimers`** (POST)
   - **Description**: Set start and stop timers for vehicle charging.
   - **Body**:
