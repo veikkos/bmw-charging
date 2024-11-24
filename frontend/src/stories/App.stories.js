@@ -14,6 +14,7 @@ const mockHandlers = {
   handleOptimize: () => alert("Optimizing..."),
   handleStartCharging: () => alert("Starting charging..."),
   handleStopCharging: () => alert("Stopping charging..."),
+  handleSetHcaptchaToken: () => alert("Setting hCaptcha token..."),
 };
 
 const Template = (args) => <AppUI {...args} {...mockHandlers} />;
@@ -31,6 +32,8 @@ NoCar.args = {
   schedule: { startTime: '', stopTime: '' },
   imageSrc: '',
   prices: [],
+  hcaptchaToken: '',
+  loggedIn: true,
 };
 
 // Story: Car Not Connected
@@ -46,6 +49,8 @@ CarNotConnected.args = {
   schedule: { startTime: '', stopTime: '' },
   imageSrc: 'https://via.placeholder.com/300',
   prices: [],
+  hcaptchaToken: '',
+  loggedIn: true,
 };
 
 // Story: Car Not Connected, Battery Level available
@@ -61,6 +66,8 @@ CarNotConnectedWithLevel.args = {
   schedule: { startTime: '', stopTime: '' },
   imageSrc: 'https://via.placeholder.com/300',
   prices: [],
+  hcaptchaToken: '',
+  loggedIn: true,
 };
 
 // Story: Car Charging with Schedule
@@ -76,6 +83,8 @@ CarChargingWithSchedule.args = {
   schedule: { startTime: '', stopTime: '12:00' },
   imageSrc: 'https://via.placeholder.com/300',
   prices: [],
+  hcaptchaToken: '',
+  loggedIn: true,
 };
 
 // Story: Car Connected, Not Charging
@@ -91,6 +100,8 @@ CarConnectedNotCharging.args = {
   schedule: { startTime: '', stopTime: '' },
   imageSrc: 'https://via.placeholder.com/300',
   prices: [],
+  hcaptchaToken: '',
+  loggedIn: true,
 };
 
 // Story: Schedule Set, Not Charging
@@ -106,4 +117,23 @@ ScheduleSetNotCharging.args = {
   schedule: { startTime: '10:00', stopTime: '14:00' },
   imageSrc: 'https://via.placeholder.com/300',
   prices: [],
+  hcaptchaToken: '',
+  loggedIn: true,
+};
+
+// Story: Not logged in
+export const NotLoggedIn = Template.bind({});
+NotLoggedIn.args = {
+  vin: '123456789',
+  startTime: '',
+  stopTime: '',
+  message: '',
+  connected: false,
+  charging: false,
+  batteryLevel: 0,
+  schedule: { startTime: '', stopTime: '' },
+  imageSrc: 'https://via.placeholder.com/300',
+  prices: [],
+  hcaptchaToken: '',
+  loggedIn: false,
 };

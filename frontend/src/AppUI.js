@@ -13,6 +13,10 @@ const AppUI = ({
   batteryLevel,
   schedule,
   imageSrc,
+  loggedIn,
+  hcaptchaToken,
+  setHcaptchaToken,
+  handleSetHcaptchaToken,
   handleClearTimers,
   handleSetTimers,
   handleOptimize,
@@ -35,7 +39,7 @@ const AppUI = ({
   );
 
   const renderChargingStatus = () => (
-    connected && (
+    loggedIn && connected && (
       <p className={`text-lg mt-4 ${smallTextClasses}`}>
         {charging ? 'Charging' : 'Not charging'}
       </p>
@@ -43,7 +47,7 @@ const AppUI = ({
   );
 
   const renderScheduleCard = () => (
-    vin && (schedule.startTime || schedule.stopTime) && (
+    loggedIn && vin && (schedule.startTime || schedule.stopTime) && (
       <div className={`${cardClasses} flex flex-col justify-between mt-8`}>
         <h2 className={titleClasses}>Current schedule</h2>
         <div className="flex items-center space-x-4 text-gray-600 text-lg">
@@ -59,7 +63,7 @@ const AppUI = ({
   );
 
   const renderCreateScheduleCard = () => (
-    vin && !schedule.startTime && !schedule.stopTime && (
+    loggedIn && vin && !schedule.startTime && !schedule.stopTime && (
       <div className={`${cardClasses} flex flex-col justify-between mt-8`}>
         <h2 className={titleClasses}>Create schedule</h2>
         <div className="flex items-center space-x-4 text-gray-600">
@@ -93,27 +97,53 @@ const AppUI = ({
     )
   );
 
+  const renderLoginCard = () => (
+    !loggedIn && (
+      <div className={`${cardClasses} bg-warning flex flex-col justify-between mb-8`}>
+        <h2 className={titleClasses}>Login</h2>
+        <div className={'flex flex-row justify-between'}>
+          <input
+            type="text"
+            placeholder="hCaptcha token"
+            value={hcaptchaToken}
+            onChange={(e) => setHcaptchaToken(e.target.value)}
+            className="border border-gray-300 text-gray-600 p-2 rounded flex-grow mr-4"
+          />
+          <button
+            onClick={() => handleSetHcaptchaToken(hcaptchaToken)}
+            className={`${buttonClasses} bg-blue-500 text-white`}
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    )
+  );
+
   return (
     <div className="w-full min-h-screen bg-background flex justify-center py-8">
       <div className="max-w-lg flex flex-col">
         <h1 className="text-4xl font-bold text-center pb-8">BMW Charging</h1>
-        <div className={`${cardClasses} flex flex-col`}>
-          <input
-            type="text"
-            value={vin}
-            onChange={(e) => setVin(e.target.value)}
-            placeholder="VIN or part of the model"
-            className="border border-gray-300 text-gray-600 p-2 rounded"
-          />
-        </div>
+        {renderLoginCard()}
+        {loggedIn && (
+          <div className={`${cardClasses} flex flex-col`}>
+            <input
+              type="text"
+              value={vin}
+              onChange={(e) => setVin(e.target.value)}
+              placeholder="VIN or part of the model"
+              className="border border-gray-300 text-gray-600 p-2 rounded"
+            />
+          </div>
+        )}
 
-        {imageSrc && (
+        {loggedIn && imageSrc && (
           <div className="mt-8">
             <img src={imageSrc} alt="Vehicle" className="w-full" />
           </div>
         )}
 
-        {vin && (
+        {loggedIn && vin && (
           <div className={`${cardClasses} flex flex-row justify-between mt-8 ${charging ? 'pulse bg-charging' : ''}`}>
             <div>
               {renderConnectionStatus()}

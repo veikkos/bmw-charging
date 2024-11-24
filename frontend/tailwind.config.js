@@ -8,6 +8,7 @@ module.exports = {
       colors: {
         background: '#262626',
         card: '#EFEFEF',
+        warning: '#FFF360',
       },
     },
   },

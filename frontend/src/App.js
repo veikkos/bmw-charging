@@ -15,6 +15,8 @@ function App() {
   const [schedule, setSchedule] = useState({ startTime: '', stopTime: '' });
   const [imageSrc, setImageSrc] = useState('');
   const [prices, setPrices] = useState(null);
+  const [hcaptchaToken, setHcaptchaToken] = useState('');
+  const [loggedIn, setLoggedIn] = useState(true);
 
   const apiUrlBase = process.env.REACT_APP_API_URL;
 
@@ -26,24 +28,25 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (vin) {
-        setMessage('Loading...');
-        localStorage.setItem('vin', vin);
-        // Fetch car status first before starting other parallel requests
-        // to allow backend to login first if necessary
-        await fetchCarStatus(vin);
-        fetchTimers(vin);
-        fetchVehicleImage(vin, 'FrontView');
-      } else {
-        localStorage.removeItem('vin');
-        setImageSrc('');
-      }
-    };
-
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vin]);
+
+  const fetchData = async () => {
+    if (vin) {
+      setMessage('Loading...');
+      localStorage.setItem('vin', vin);
+      // Fetch car status first before starting other parallel requests
+      // to allow backend to login first if necessary
+      if (await fetchCarStatus(vin)) {
+        fetchTimers(vin);
+        fetchVehicleImage(vin, 'FrontView');
+      }
+    } else {
+      localStorage.removeItem('vin');
+      setImageSrc('');
+    }
+  };
 
   const fetchCarStatus = async (vin) => {
     try {
@@ -57,6 +60,7 @@ function App() {
       const data = await response.json();
 
       if (response.ok) {
+        setLoggedIn(true);
         setConnected(data.status.isConnected);
         setCharging(data.status.isCharging);
         setBatteryLevel(data.status.chargingLevelPercent);
@@ -68,6 +72,7 @@ function App() {
     } catch (error) {
       setMessage('Error: Unable to get car status');
     }
+    setLoggedIn(false);
     return null;
   };
 
@@ -133,6 +138,30 @@ function App() {
       } else {
         setMessage('Error optimizing charging schedule');
       }
+    }
+  };
+
+  const handleSetHcaptchaToken = async (hcaptchatoken) => {
+    try {
+      const response = await fetch(`${apiUrlBase}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hcaptchatoken: hcaptchatoken,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        fetchData();
+      } else {
+        setMessage(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      setMessage('Error: Unable to login');
     }
   };
 
@@ -270,6 +299,10 @@ function App() {
       batteryLevel={batteryLevel}
       schedule={schedule}
       imageSrc={imageSrc}
+      loggedIn={loggedIn}
+      hcaptchaToken={hcaptchaToken}
+      setHcaptchaToken={setHcaptchaToken}
+      handleSetHcaptchaToken={handleSetHcaptchaToken}
       handleClearTimers={handleClearTimers}
       handleSetTimers={handleSetTimers}
       handleOptimize={handleOptimize}
