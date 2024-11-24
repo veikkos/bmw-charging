@@ -35,7 +35,7 @@ function createTimerObject() {
 }
 
 async function getFullVin(vin) {
-    const vehicleDetails = await bmwClient.vehicleDetails(vin);
+    const vehicleDetails = await bmwClient.vehicles(vin);
     return vehicleDetails[0]?.vin;
 }
 
