@@ -26,16 +26,22 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (vin) {
-      setMessage('Loading...');
-      localStorage.setItem('vin', vin);
-      fetchCarStatus(vin);
-      fetchTimers(vin);
-      fetchVehicleImage(vin, 'FrontView');
-    } else {
-      localStorage.removeItem('vin');
-      setImageSrc('');
-    }
+    const fetchData = async () => {
+      if (vin) {
+        setMessage('Loading...');
+        localStorage.setItem('vin', vin);
+        // Fetch car status first before starting other parallel requests
+        // to allow backend to login first if necessary
+        await fetchCarStatus(vin);
+        fetchTimers(vin);
+        fetchVehicleImage(vin, 'FrontView');
+      } else {
+        localStorage.removeItem('vin');
+        setImageSrc('');
+      }
+    };
+
+    fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vin]);
 
