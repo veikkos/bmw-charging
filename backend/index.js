@@ -4,7 +4,7 @@ const app = express();
 const port = 3000;
 
 const BMWClient = require('bmw/src/bmw');
-const bmwClient = new BMWClient();
+let bmwClient = new BMWClient();
 
 const cors = require('cors');
 
@@ -82,6 +82,24 @@ async function fetchFullVin(vin) {
 
     return { fullVin };
 }
+
+app.post('/login', async (req, res) => {
+    const { hcaptchatoken } = req.body;
+
+    if (!hcaptchatoken) {
+        return res.status(400).json({ error: 'hcaptchatoken is required to relogin' });
+    }
+
+    try {
+        bmwClient = new BMWClient(null, null, null, hcaptchatoken);
+        bmwClient.bmwClientAPI.resetCache();
+        await bmwClient.login();
+
+        res.json({ message: 'Login successful' });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to login' });
+    }
+});
 
 app.post('/setTimers', async (req, res) => {
     const { startTime, stopTime, vin } = req.body;
@@ -322,9 +340,6 @@ app.get('/vehicleImages', async (req, res) => {
     }
 });
 
-bmwClient.login()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`Timer API running on http://localhost:${port}`);
-        });
-    })
+app.listen(port, () => {
+    console.log(`Timer API running on http://localhost:${port}`);
+});

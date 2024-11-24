@@ -10,7 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "bmw": "github:veikkos/bmw#debug",
+    "bmw": "github:veikkos/bmw#captcha-api",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1"
