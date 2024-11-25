@@ -99,7 +99,7 @@ const AppUI = ({
 
   const renderLoginCard = () => (
     !loggedIn && (
-      <div className={`${cardClasses} bg-warning flex flex-col justify-between mb-8`}>
+      <div className={`${cardClasses} bg-warning flex flex-col justify-between`}>
         <h2 className={titleClasses}>Login</h2>
         <div className={'flex flex-row justify-between'}>
           <input

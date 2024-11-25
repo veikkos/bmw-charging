@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
+const { MissingCaptchaToken, Unauthorized } = require('bmw/src/errors');
 const BMWClient = require('bmw/src/bmw');
 let bmwClient = new BMWClient();
 
@@ -83,6 +84,16 @@ async function fetchFullVin(vin) {
     return { fullVin };
 }
 
+function genericErrorHandling(error) {
+    if (error instanceof MissingCaptchaToken) {
+        return { status: 401, message: 'Missing hCaptcha token' };
+    } else if (error instanceof Unauthorized) {
+        return { status: 401, message: 'Unauthorized' };
+    } else {
+        return null;
+    }
+}
+
 app.post('/login', async (req, res) => {
     const { hcaptchatoken } = req.body;
 
@@ -97,6 +108,10 @@ app.post('/login', async (req, res) => {
 
         res.json({ message: 'Login successful' });
     } catch (error) {
+        const genericError = genericErrorHandling(error);
+        if (genericError) {
+            return res.status(genericError.status).json({ error: genericError.message });
+        }
         res.status(500).json({ error: 'Failed to login' });
     }
 });
@@ -300,6 +315,10 @@ app.get('/vehicleStatus', async (req, res) => {
 
         res.json({ message, status });
     } catch (error) {
+        const genericError = genericErrorHandling(error);
+        if (genericError) {
+            return res.status(genericError.status).json({ error: genericError.message });
+        }
         console.error(`Error retrieving car status for VIN: ${vin}:`, error);
         res.status(500).json({ error: `Failed to retrieve car status for VIN: ${vin}` });
     }

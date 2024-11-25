@@ -66,14 +66,14 @@ function App() {
         setBatteryLevel(data.status.chargingLevelPercent);
         setMessage('');
         return data.status;
-      } else {
+      } else if (response.status === 401) {
+        setLoggedIn(false);
         setMessage(`Error: ${data.error}`);
       }
     } catch (error) {
       setMessage('Error: Unable to get car status');
     }
-    setLoggedIn(false);
-    return null;
+    return null
   };
 
   const fetchTimers = async (vin) => {
