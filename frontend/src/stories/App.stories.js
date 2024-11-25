@@ -3,7 +3,7 @@
 import React from 'react';
 import AppUI from '../AppUI';
 
-export default {
+const appUIStory = {
   title: 'AppUI',
   component: AppUI,
 };
@@ -137,3 +137,5 @@ NotLoggedIn.args = {
   hcaptchaToken: '',
   loggedIn: false,
 };
+
+export default appUIStory;
