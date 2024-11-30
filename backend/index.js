@@ -25,11 +25,13 @@ function createTimerObject() {
         startTimerObj: {
             timer: null,
             delay: null,
+            dateString: null,
             timeSet: null
         },
         stopTimerObj: {
             timer: null,
             delay: null,
+            dateString: null,
             timeSet: null
         }
     };
@@ -44,15 +46,15 @@ async function getFullVin(vin) {
 function calculateDelay(hhmm) {
     const [hours, minutes] = hhmm.split(':').map(Number);
     const now = new Date();
-    const targetTime = new Date(now);
-    targetTime.setHours(hours, minutes, 0, 0); // Set the target time for today
+    const dateString = new Date(now);
+    dateString.setHours(hours, minutes, 0, 0); // Set the target time for today
 
     // If target time is in the past, set it for tomorrow
-    if (targetTime < now) {
-        targetTime.setDate(targetTime.getDate() + 1);
+    if (dateString < now) {
+        dateString.setDate(dateString.getDate() + 1);
     }
 
-    return targetTime - now; // Return delay in milliseconds
+    return { dateString, delay: dateString - now }; // Return delay in milliseconds
 }
 
 function clearTimerIfNeeded(timerObj) {
@@ -63,6 +65,7 @@ function clearTimerIfNeeded(timerObj) {
             console.log('Timer cleared');
         }
         timerObj.delay = null;
+        timerObj.dateString = null;
         timerObj.timeSet = null;
     }
 }
@@ -167,10 +170,14 @@ app.post('/setTimers', async (req, res) => {
     clearTimerIfNeeded(stopTimerObj);
 
     if (startTime) {
-        startTimerObj.delay = calculateDelay(startTime);
+        const { dateString, delay } = calculateDelay(startTime)
+        startTimerObj.dateString = dateString;
+        startTimerObj.delay = delay;
     }
     if (stopTime) {
-        stopTimerObj.delay = calculateDelay(stopTime);
+        const { dateString, delay } = calculateDelay(stopTime)
+        stopTimerObj.dateString = dateString;
+        stopTimerObj.delay = delay;
     }
 
     if (startTime && stopTime && stopTimerObj.delay <= startTimerObj.delay) {
@@ -219,6 +226,8 @@ app.post('/setTimers', async (req, res) => {
     const result = {
         message: 'Timers set successfully',
         vin: fullVin,
+        startTimeDateString: startTimerObj?.dateString,
+        stopTimeDateString: stopTimerObj?.dateString,
         startDelay: startTimerObj?.delay,
         stopDelay: stopTimerObj?.delay
     };
@@ -330,6 +339,8 @@ app.get('/getTimers', async (req, res) => {
         message: `Timers are currently set for VIN: ${fullVin}.`,
         startTime: startTimerObj.timeSet,
         stopTime: stopTimerObj.timeSet,
+        startTimeDateString: startTimerObj.dateString,
+        stopTimeDateString: stopTimerObj.dateString,
         startTimerRemaining: startTimerRemaining ? `${Math.floor(startTimerRemaining / 1000)} seconds remaining` : 'N/A',
         stopTimerRemaining: stopTimerRemaining ? `${Math.floor(stopTimerRemaining / 1000)} seconds remaining` : 'N/A'
     });

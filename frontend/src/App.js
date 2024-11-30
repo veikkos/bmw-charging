@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import AppUI from './AppUI';
 import { fetchSpotPrices } from './Spot';
-import { findBestChargingSlot } from './Optimize';
+import { findBestChargingSlot, calculateAverageChargingPrice } from './Optimize';
 
 function App() {
   const [vin, setVin] = useState('');
@@ -113,9 +113,7 @@ function App() {
     }
   };
 
-  const handleOptimize = async () => {
-    setMessage('Optimizing charging schedule...');
-
+  const getSpotPrices = async () => {
     let currentPrices = prices;
 
     if (!currentPrices) {
@@ -125,9 +123,16 @@ function App() {
         currentPrices = spot;
       } else {
         setMessage('Error fetching spot prices');
-        return;
       }
     }
+
+    return currentPrices;
+  };
+
+  const handleOptimize = async () => {
+    setMessage('Optimizing charging schedule...');
+
+    let currentPrices = await getSpotPrices();
 
     if (currentPrices) {
       const result = findBestChargingSlot(currentPrices, 8);
@@ -183,6 +188,21 @@ function App() {
 
       if (response.ok) {
         fetchTimers(vin);
+
+        if (data.startTimeDateString && data.stopTimeDateString) {
+          let currentPrices = await getSpotPrices();
+
+          if (currentPrices) {
+            const { averagePrice } = calculateAverageChargingPrice(currentPrices,
+              data.startTimeDateString,
+              data.stopTimeDateString
+            );
+
+            if (averagePrice) {
+              return setMessage(`Timers set with average price: ${(averagePrice * 100).toFixed(2)} c/kWh`);
+            }
+          }
+        }
         setMessage('');
       } else {
         setMessage(`Error: ${data.error}`);

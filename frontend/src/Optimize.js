@@ -89,3 +89,54 @@ const calculateCharging = (prices, maxChargingHours, latestStartHours) => {
     };
   }
 };
+
+export const calculateAverageChargingPrice = (prices, startTimeDateString, endTimeDateString) => {
+  const startDateTime = new Date(startTimeDateString);
+  const endDateTime = new Date(endTimeDateString);
+
+  if (endDateTime <= startDateTime) {
+    return null;
+  }
+
+  const filteredPrices = prices
+    .map(price => ({
+      dateTime: new Date(price.DateTime),
+      priceWithTax: price.PriceWithTax
+    }))
+    .filter(price => price.dateTime < endDateTime &&
+      new Date(price.dateTime.getTime() + 60 * 60 * 1000) > startDateTime);
+
+  const earliestCoveredTime = filteredPrices.length > 0 ? filteredPrices[0].dateTime : null;
+  const latestCoveredTime = filteredPrices.length > 0
+    ? new Date(filteredPrices[filteredPrices.length - 1].dateTime.getTime() + 60 * 60 * 1000)
+    : null;
+
+  if (!earliestCoveredTime || !latestCoveredTime || earliestCoveredTime > startDateTime || latestCoveredTime < endDateTime) {
+    return null;
+  }
+
+  let totalWeightedPrice = 0;
+  let totalDuration = 0;
+
+  for (let i = 0; i < filteredPrices.length; i++) {
+    const currentPrice = filteredPrices[i];
+    const nextPriceTime = i + 1 < filteredPrices.length
+      ? filteredPrices[i + 1].dateTime
+      : new Date(currentPrice.dateTime.getTime() + 60 * 60 * 1000);
+
+    const overlapStart = Math.max(startDateTime.getTime(), currentPrice.dateTime.getTime());
+    const overlapEnd = Math.min(endDateTime.getTime(), nextPriceTime.getTime());
+
+    const overlapDuration = (overlapEnd - overlapStart) / (60 * 60 * 1000);
+
+    totalWeightedPrice += overlapDuration * currentPrice.priceWithTax;
+    totalDuration += overlapDuration;
+  }
+
+  const averagePrice = totalWeightedPrice / totalDuration;
+
+  return {
+    averagePrice: parseFloat(averagePrice.toFixed(4)),
+    totalDuration: totalDuration.toFixed(2) + ' hours'
+  };
+};
