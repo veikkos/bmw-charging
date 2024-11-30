@@ -56,12 +56,14 @@ function calculateDelay(hhmm) {
 }
 
 function clearTimerIfNeeded(timerObj) {
-    if (timerObj.timer) {
-        clearTimeout(timerObj.timer);
-        timerObj.timer = null;
+    if (timerObj) {
+        if (timerObj.timer) {
+            clearTimeout(timerObj.timer);
+            timerObj.timer = null;
+            console.log('Timer cleared');
+        }
         timerObj.delay = null;
         timerObj.timeSet = null;
-        console.log('Timer cleared.');
     }
 }
 
@@ -116,11 +118,35 @@ app.post('/login', async (req, res) => {
     }
 });
 
+function validateTimerInput({ startTime, stopTime, vin }) {
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    if (!vin) {
+        return { valid: false, error: 'VIN is required' };
+    }
+
+    if (!startTime && !stopTime) {
+        return { valid: false, error: 'At least start or stop time must be provided' };
+    }
+
+    if (startTime && !timeRegex.test(startTime)) {
+        return { valid: false, error: 'Invalid start time format (expected hh:mm)' };
+    }
+
+    if (stopTime && !timeRegex.test(stopTime)) {
+        return { valid: false, error: 'Invalid stop time format (expected hh:mm)' };
+    }
+
+    return { valid: true };
+}
+
 app.post('/setTimers', async (req, res) => {
     const { startTime, stopTime, vin } = req.body;
 
-    if (!startTime || !stopTime || !vin) {
-        return res.status(400).json({ error: 'Start time, stop time, and VIN are required' });
+    const validation = validateTimerInput({ startTime, stopTime, vin });
+
+    if (!validation.valid) {
+        return res.status(400).json({ error: validation.error });
     }
 
     const vinFetchResult = await fetchFullVin(vin);
@@ -137,48 +163,69 @@ app.post('/setTimers', async (req, res) => {
 
     const { startTimerObj, stopTimerObj } = timers;
 
-    startTimerObj.delay = calculateDelay(startTime);
-    stopTimerObj.delay = calculateDelay(stopTime);
-
-    if (stopTimerObj.delay <= startTimerObj.delay) {
-        return res.status(400).json({ error: 'Start time must be before stop time' });
-    }
-
     clearTimerIfNeeded(startTimerObj);
     clearTimerIfNeeded(stopTimerObj);
 
-    startTimerObj.timeSet = startTime;
-    stopTimerObj.timeSet = stopTime;
+    if (startTime) {
+        startTimerObj.delay = calculateDelay(startTime);
+    }
+    if (stopTime) {
+        stopTimerObj.delay = calculateDelay(stopTime);
+    }
 
-    startTimerObj.timer = setTimeout(async () => {
-        console.log(`Start timer triggered: Starting charging for VIN: ${fullVin}`);
-        try {
-            await bmwClient.startCharging(fullVin);
-            console.log(`Charging started for vehicle with VIN: ${fullVin}`);
-        } catch (error) {
-            console.error(`Error starting charging for VIN: ${fullVin}:`, error);
+    if (startTime && stopTime && stopTimerObj.delay <= startTimerObj.delay) {
+        return res.status(400).json({ error: 'Start time must be before stop time' });
+    }
+
+    if (startTimerObj.delay) {
+        startTimerObj.timeSet = startTime;
+
+        startTimerObj.timer = setTimeout(async () => {
+            console.log(`Start timer triggered: Starting charging for VIN: ${fullVin}`);
+            try {
+                await bmwClient.startCharging(fullVin);
+                console.log(`Charging started for vehicle with VIN: ${fullVin}`);
+            } catch (error) {
+                console.error(`Error starting charging for VIN: ${fullVin}:`, error);
+                clearTimerIfNeeded(stopTimerObj);
+            }
+
+            clearTimerIfNeeded(startTimerObj);
+
+            if (!startTime.delay) {
+                vinTimersMap.delete(fullVin);
+            }
+        }, startTimerObj.delay);
+    }
+
+    if (stopTimerObj.delay) {
+        stopTimerObj.timeSet = stopTime;
+
+        stopTimerObj.timer = setTimeout(async () => {
+            console.log(`Stop timer triggered: Stopping charging for VIN: ${fullVin}`);
+            try {
+                await bmwClient.stopCharging(fullVin);
+                console.log(`Charging stopped for vehicle with VIN: ${fullVin}`);
+            } catch (error) {
+                console.error(`Error stopping charging for VIN: ${fullVin}:`, error);
+            }
+
             clearTimerIfNeeded(stopTimerObj);
-        }
 
-        clearTimerIfNeeded(startTimerObj);
-    }, startTimerObj.delay);
+            vinTimersMap.delete(fullVin);
+        }, stopTimerObj.delay);
+    }
 
-    stopTimerObj.timer = setTimeout(async () => {
-        console.log(`Stop timer triggered: Stopping charging for VIN: ${fullVin}`);
-        try {
-            await bmwClient.stopCharging(fullVin);
-            console.log(`Charging stopped for vehicle with VIN: ${fullVin}`);
-        } catch (error) {
-            console.error(`Error stopping charging for VIN: ${fullVin}:`, error);
-        }
+    const result = {
+        message: 'Timers set successfully',
+        vin: fullVin,
+        startDelay: startTimerObj?.delay,
+        stopDelay: stopTimerObj?.delay
+    };
 
-        clearTimerIfNeeded(stopTimerObj);
-        vinTimersMap.delete(fullVin);
-    }, stopTimerObj.delay);
+    console.log(`Timers set result:`, result);
 
-    console.log(`Timers set for VIN ${fullVin}: Start in ${startTimerObj.delay / 1000} s, Stop in ${stopTimerObj.delay / 1000} s`);
-
-    res.json({ message: 'Timers set successfully', vin: fullVin, startDelay: startTimerObj.delay, stopDelay: stopTimerObj.delay });
+    res.json({ message: 'Timers set successfully', ...result });
 });
 
 app.post('/clearTimers', async (req, res) => {
