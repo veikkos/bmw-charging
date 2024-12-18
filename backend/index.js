@@ -199,7 +199,7 @@ app.post('/setTimers', async (req, res) => {
 
             clearTimerIfNeeded(startTimerObj);
 
-            if (!startTime.delay) {
+            if (!stopTimerObj.delay) {
                 vinTimersMap.delete(fullVin);
             }
         }, startTimerObj.delay);
